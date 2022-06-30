@@ -3,6 +3,7 @@ package pipelining
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 
@@ -66,5 +67,9 @@ func (w *writerWithoutCloseNotify) Flush() {
 
 // Hijack hijacks the connection.
 func (w *writerWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	return w.W.(http.Hijacker).Hijack()
+	hijacker, ok := w.W.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("pipelining: %T is not a http.Hijacker", w.W)
+	}
+	return hijacker.Hijack()
 }
