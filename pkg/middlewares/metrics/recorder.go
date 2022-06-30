@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"bufio"
+	"fmt"
 	"net"
 	"net/http"
 )
@@ -52,7 +53,11 @@ func (r *responseRecorder) WriteHeader(status int) {
 
 // Hijack hijacks the connection.
 func (r *responseRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	return r.ResponseWriter.(http.Hijacker).Hijack()
+	hijacker, ok := r.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("metrics: %T is not a http.Hijacker", r.ResponseWriter)
+	}
+	return hijacker.Hijack()
 }
 
 // Flush sends any buffered data to the client.
